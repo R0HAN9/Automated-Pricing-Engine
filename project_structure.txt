@@ -1,0 +1,100 @@
+Project Structure
+pricing-engine/
+│
+├── input/
+│ ├── products.csv
+│ └── sales.csv
+│
+├── output/
+│ └── updated_prices.csv
+│
+├── pricing_engine.py # Main Python script with logic
+├── README.md # Project explanation
+
+The Main code: pricing_engine.py
+
+import csv
+# Step 1: Load sales data into a dictionary (HashMap-like structure)
+
+def load_sales(file_path):
+ """
+ Reads sales.csv and returns a dictionary with sku -> quantity_sold
+ """
+    sales_data = {}
+    with open(file_path, mode='r') as file:
+    reader = csv.DictReader(file)
+        for row in reader:
+        # Using SKU as key and quantity_sold as value
+        sales_data[row['sku']] = int(row['quantity_sold'])
+        return sales_data
+
+# Step 2: Apply pricing rules based on the given logic
+
+def apply_rules(product, quantity_sold):
+    current_price = float(product['current_price'])
+    cost_price = float(product['cost_price'])
+    stock = int(product['stock'])
+    new_price = current_price
+
+    # Priority 1: Low Stock, High Demand
+    if stock < 20 and quantity_sold > 30:
+    new_price = current_price * 1.15
+
+    # Priority 2: Dead Stock
+    elif stock > 200 and quantity_sold == 0:
+    new_price = current_price * 0.70
+
+    # Priority 3: Overstocked Inventory
+    elif stock > 100 and quantity_sold < 20:
+    new_price = current_price * 0.90
+
+    # Rule 4: Minimum profit constraint (always applies)
+    min_price = cost_price * 1.2
+
+    if new_price < min_price:
+        new_price = min_price
+        return round(current_price, 2), round(new_price, 2)
+
+
+# Step 3: Update prices and write to output CSV
+    def update_prices(products_file, sales_data, output_file):
+     with open(products_file, mode='r') as infile, open(output_file, mode='w',
+    newline='', encoding='utf-8') as outfile:
+
+    reader = csv.DictReader(infile)
+    fieldnames = ['sku', 'old_price (in ₹)', 'new_price (in ₹)']
+    writer = csv.DictWriter(outfile, fieldnames=fieldnames)
+    writer.writeheader()
+    for row in reader:
+    sku = row['sku']
+    quantity_sold = sales_data.get(sku, 0) # Default to 0 if not sold
+    old_price, new_price = apply_rules(row, quantity_sold)
+        writer.writerow({
+        'sku': sku,
+        'old_price (in ₹)': f"{old_price:.2f}",
+        'new_price (in ₹)': f"{new_price:.2f}"
+        })
+
+# Step 4: Orchestrator function
+
+def main():
+ sales_data = load_sales('input/sales.csv')
+ update_prices('input/products.csv', sales_data, 'output/updated_prices.csv')
+ print("Pricing update completed. Check output/updated_prices.csv")
+# Standard entry point for Python script
+if __name__ == "__main__":
+ main()
+
+
+Sample Output
+
+#Sample Output
+| sku | old_price (in ₹) | new_price (in ₹) |
+|------|------------------|------------------|
+| A123 | 649.99 | 600.00 |
+| B456 | 699.00 | 803.85 |
+| C789 | 999.00 | 699.30 |
+---
+#How to Run
+```bash
+python pricing_engine.py
