@@ -9,7 +9,7 @@ inventory levels and recent sales performance.
 
     Output File:
     updated_prices.csv: Contains product SKUs, old price, and new adjusted price.
-
+ 
 Problem Breakdown
 
     Load Data: Parse sales.csv and products.csv to get sales data and product details.
